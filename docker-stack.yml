@@ -1,0 +1,89 @@
+version: '3.3'
+
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.11.2
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    configs:
+      - source: elastic_config
+        target: /usr/share/elasticsearch/config/elasticsearch.yml
+      # (!) TLS certificates. Generate using instructions from tls/README.md.
+      - source: elasticsearch_transport_cert
+        target: /usr/share/elasticsearch/config/elasticsearch.p12
+      - source: elasticsearch_http_cert
+        target: /usr/share/elasticsearch/config/http.p12
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      ELASTIC_PASSWORD: changeme
+      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
+      # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
+      discovery.type: single-node
+      # Force publishing on the 'elk' overlay.
+      network.publish_host: _eth0_
+    networks:
+      - elk
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.11.2
+    ports:
+      - "5044:5044"
+      - "5000:5000"
+      - "9600:9600"
+    configs:
+      - source: logstash_config
+        target: /usr/share/logstash/config/logstash.yml
+      - source: logstash_pipeline
+        target: /usr/share/logstash/pipeline/logstash.conf
+      # (!) CA certificate. Generate using instructions from tls/README.md.
+      - source: elasticsearch_ca_cert
+        target: /usr/share/logstash/config/elasticsearch-ca.pem
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - elk
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.11.2
+    ports:
+      - "5601:5601"
+    configs:
+      - source: kibana_config
+        target: /usr/share/kibana/config/kibana.yml
+      # (!) CA certificate. Generate using instructions from tls/README.md.
+      - source: elasticsearch_ca_cert
+        target: /usr/share/kibana/config/elasticsearch-ca.pem
+    networks:
+      - elk
+    deploy:
+      mode: replicated
+      replicas: 1
+
+configs:
+
+  elastic_config:
+    file: ./elasticsearch/config/elasticsearch.yml
+  logstash_config:
+    file: ./logstash/config/logstash.yml
+  logstash_pipeline:
+    file: ./logstash/pipeline/logstash.conf
+  kibana_config:
+    file: ./kibana/config/kibana.yml
+  elasticsearch_transport_cert:
+    file: ./tls/elasticsearch/elasticsearch.p12
+  elasticsearch_http_cert:
+    file: ./tls/elasticsearch/http.p12
+  elasticsearch_ca_cert:
+    file: ./tls/kibana/elasticsearch-ca.pem
+
+networks:
+  elk:
+    driver: overlay
