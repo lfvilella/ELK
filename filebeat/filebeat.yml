@@ -1,0 +1,18 @@
+filebeat:
+  prospectors:
+    -
+      paths:
+        - /var/log/.log
+      input_type: log
+      document_type: my_type
+      scan_frequency: 10s
+
+output:
+  logstash:
+    hosts: ["logstash:5044"]
+
+logging:
+  files:
+    rotateeverybytes: 10485760 # = 10MB
+  selectors: ["*"]
+  level: warning

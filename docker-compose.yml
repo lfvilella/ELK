@@ -1,6 +1,18 @@
 version: '3.2'
 
 services:
+  app:
+    build:
+      context: application/
+    volumes:
+      - ./application:/app
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    command: "/bin/bash"
+    networks:
+      - elk
+
   elasticsearch:
     build:
       context: elasticsearch/
@@ -20,8 +32,6 @@ services:
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
       ELASTIC_PASSWORD: changeme
-      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
-      # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
       discovery.type: single-node
     networks:
       - elk
@@ -37,6 +47,10 @@ services:
         target: /usr/share/logstash/config/logstash.yml
         read_only: true
       - type: bind
+        source: ./logstash/patterns/
+        target: /opt/logstash/patterns/
+        read_only: true
+      - type: bind
         source: ./logstash/pipeline
         target: /usr/share/logstash/pipeline
         read_only: true
@@ -45,8 +59,11 @@ services:
       - "5000:5000/tcp"
       - "5000:5000/udp"
       - "9600:9600"
+      - "8080:8080"
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    stdin_open: true
+    tty: true
     networks:
       - elk
     depends_on:
@@ -68,6 +85,18 @@ services:
       - elk
     depends_on:
       - elasticsearch
+
+  filebeat:
+    image: prima/filebeat
+    volumes:
+      - ./filebeat/filebeat.yml:/filebeat.yml
+      - ./application/logs:/var/log
+    stdin_open: true
+    tty: true
+    networks:
+      - elk
+    depends_on:
+      - logstash
 
 networks:
   elk:
