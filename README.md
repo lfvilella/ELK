@@ -81,7 +81,7 @@ We set the index to `my_index_patterns` on [logstash.conf](https://github.com/lf
 *ps: don't care about my old tests*
 
 ![image](https://user-images.githubusercontent.com/45940140/120199367-89550500-c1f9-11eb-8a66-9516c25f8709.png)
-Screen Shot 2021-05-31 at 10.22.40![image](https://user-images.githubusercontent.com/45940140/120199959-2a43c000-c1fa-11eb-856a-2102be03a91c.png)
+![image](https://user-images.githubusercontent.com/45940140/120199959-2a43c000-c1fa-11eb-856a-2102be03a91c.png)
 *Select timestamp or not* and `CREATE INDEX PATTERNS`
 
 ![image](https://user-images.githubusercontent.com/45940140/120200568-df767800-c1fa-11eb-98b4-9ddbe2991998.png)
