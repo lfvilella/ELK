@@ -9,7 +9,7 @@ services:
     working_dir: /app
     stdin_open: true
     tty: true
-    command: "/bin/bash"
+    command: ${RUNAPP:-/bin/bash}
     networks:
       - elk
 
